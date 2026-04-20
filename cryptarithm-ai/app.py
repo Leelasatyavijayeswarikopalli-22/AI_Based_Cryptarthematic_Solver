@@ -4,35 +4,28 @@ import itertools
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 def solve_cryptarithm(words, result):
-    steps = []
+   letters = sorted(set("".join(words) + result))
+   steps = []
 
-    letters = set("".join(words) + result)
-    letters = list(letters)
+   for i, perm in enumerate(itertools.permutations(range(10), len(letters))):
 
-    if len(letters) > 10:
-        return {"solution": None, "steps": ["Too many letters (>10)"]}
+     mapping = dict(zip(letters, perm))
 
-    digits = range(10)
+     if i < 200000 and i % 20000 == 0:
+        steps.append(f"Trying #{i}: {mapping}")
 
-    for i, perm in enumerate(itertools.permutations(digits, len(letters))):
+     if any(mapping[w[0]] == 0 for w in words + [result]):
+        continue
 
-        mapping = dict(zip(letters, perm))
+     def word_to_num(word):
+        return int("".join(str(mapping[c]) for c in word))
 
-        if i % 50000 == 0:
-            steps.append(f"Trying permutation #{i}: {mapping}")
+     if sum(word_to_num(w) for w in words) == word_to_num(result):
+        steps.append("Solution found 🎉")
+        return {"solution": mapping, "steps": steps}
 
-        if any(mapping[w[0]] == 0 for w in words + [result]):
-            continue
-
-        def word_to_num(word):
-            return int("".join(str(mapping[c]) for c in word))
-
-        if sum(word_to_num(w) for w in words) == word_to_num(result):
-            steps.append("Solution found 🎉")
-            return {"solution": mapping, "steps": steps}
-
-    steps.append("No solution found")
-    return {"solution": None, "steps": steps}
+   steps.append("No solution found")
+   return {"solution": None, "steps": steps}
 
 @app.route("/")
 def index():
@@ -42,7 +35,9 @@ def index():
 
 @app.route("/solve", methods=["POST"])
 def solve():
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True)
+    if not data:
+     return jsonify({"error": "Invalid JSON"}), 400
     if not data:
      return jsonify({"error": "Invalid JSON"}), 400 
 
