@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import itertools
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates", static_folder="static")
 
 def solve_cryptarithm(words, result):
     letters = set("".join(words) + result)
@@ -29,7 +29,6 @@ def solve_cryptarithm(words, result):
 
 @app.route("/")
 def index():
-    print("INDEX PAGE LOADED")
     return render_template("index.html")
 
 @app.route("/solve", methods=["POST"])
