@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cryptarithmetic AI Solver</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+<h1>🧠 AI Cryptarithm Solver</h1>
+
+<div id="words">
+<input class="word" placeholder="WORD">
+<button onclick="addWord()">+ Add Word</button>
+</div>
+<h2>=</h2>
+
+<input id="result" placeholder="RESULT">
+
+<br>
+
+<button onclick="runSolver()" id="runBtn">▶ Run Solver</button>
+
+<div id="status">Idle</div>
+
+<pre id="output"></pre>
+
+</div>
+<script>
+    function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function addWord() {
+    let input = document.createElement("input");
+    input.className = "word";
+    input.placeholder = "WORD";
+    document.getElementById("words").appendChild(input);
+}
+
+async function runSolver() {
+
+    document.getElementById("output").innerHTML = "";
+    document.getElementById("status").innerText = "Thinking... 🤖";
+
+    let words = [];
+    document.querySelectorAll(".word").forEach(w => {
+        if (w.value.trim() !== "")
+            words.push(w.value.trim().toUpperCase());
+    });
+
+    let result = document.getElementById("result").value.trim().toUpperCase();
+
+    let res = await fetch("/solve", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({words, result})
+    });
+
+    let data = await res.json();
+
+    if (data.steps) {
+
+        document.getElementById("status").innerText = "Solving...";
+
+        for (let i = 0; i < data.steps.length; i++) {
+            document.getElementById("output").innerHTML += data.steps[i] + "\n";
+            await sleep(300); // 👈 animation effect
+        }
+    }
+    if (data.error) {
+    document.getElementById("status").innerText = data.error;
+    return;
+}
+
+    if (data.solution) {
+        document.getElementById("status").innerText = "Solved 🎉";
+
+        document.getElementById("output").innerHTML += "\nFINAL SOLUTION:\n";
+
+        for (let k in data.solution) {
+            document.getElementById("output").innerHTML += `${k} → ${data.solution[k]}\n`;
+        }
+    } else {
+        document.getElementById("status").innerText = "No solution found ❌";
+    }
+}
+</script>
+
+</body>
+</html>
